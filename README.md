@@ -9,7 +9,6 @@ Dự án này là bài thi kỹ thuật (Technical Test) xây dựng hệ thốn
 - **Họ và tên**: Tất Tấn Lâm
 - **Vị trí ứng tuyển**: Fullstack Developer (Golang + React)
 - **Email**: tattanlam.work@gmail.com
-- **Số điện thoại**: 0902795906
 
 ---
 
