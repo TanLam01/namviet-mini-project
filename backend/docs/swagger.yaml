@@ -1,0 +1,376 @@
+basePath: /api
+definitions:
+  domain.Stats:
+    properties:
+      available:
+        type: integer
+      gaAvailable:
+        type: integer
+      holding:
+        type: integer
+      revenue:
+        type: integer
+      sold:
+        type: integer
+      standardAvailable:
+        type: integer
+      total:
+        type: integer
+      vipAvailable:
+        type: integer
+    type: object
+  domain.Ticket:
+    properties:
+      createdAt:
+        type: string
+      customerEmail:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      heldBy:
+        type: string
+      holdExpiry:
+        type: string
+      id:
+        type: string
+      price:
+        type: integer
+      status:
+        description: Available, Holding, Sold
+        type: string
+      type:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  http.ConfirmPaymentRequest:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      phone:
+        type: string
+      ticketIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - email
+    - fullName
+    - phone
+    - ticketIds
+    type: object
+  http.HoldTicketsRequest:
+    properties:
+      buyerName:
+        type: string
+      ticketIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - buyerName
+    - ticketIds
+    type: object
+  http.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  http.RegisterRequest:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - fullName
+    - password
+    - phone
+    - username
+    type: object
+  http.ReleaseTicketsRequest:
+    properties:
+      ticketIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ticketIds
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Hệ thống đặt vé Concert tải cực cao, chống race condition bằng Redis
+    lock & Postgres FOR UPDATE lock, kết hợp SSE real-time.
+  title: Mini Ticketbox API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Xác thực thông tin tài khoản và trả về thông tin người dùng kèm
+        vai trò (role)
+      parameters:
+      - description: Thông tin tài khoản đăng nhập
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng nhập tài khoản
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Đăng ký thông tin người dùng mới vào hệ thống, mật khẩu sẽ được
+        mã hóa bcrypt một chiều
+      parameters:
+      - description: Thông tin đăng ký tài khoản
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng ký tài khoản User mới
+      tags:
+      - auth
+  /tickets:
+    get:
+      description: Trả về danh sách 500 vị trí ghế ngồi (VIP, GA, STANDARD) kèm trạng
+        thái
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Ticket'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách toàn bộ vé
+      tags:
+      - tickets
+  /tickets/hold:
+    post:
+      consumes:
+      - application/json
+      description: Khóa một hoặc nhiều ghế độc quyền cho người dùng mua vé, ngăn chặn
+        race condition bằng Redis lock và Postgres FOR UPDATE lock.
+      parameters:
+      - description: Dữ liệu chọn nhiều ghế giữ vé
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.HoldTicketsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Giữ ghế tạm thời (5 phút) cho nhiều ghế
+      tags:
+      - tickets
+  /tickets/pay:
+    post:
+      consumes:
+      - application/json
+      description: Xác nhận thanh toán thành công cho danh sách vé đang được giữ,
+        cập nhật thông tin khách hàng và đổi trạng thái sang Sold.
+      parameters:
+      - description: Thông tin thanh toán khách hàng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ConfirmPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Thanh toán giao dịch nhiều vé
+      tags:
+      - tickets
+  /tickets/release:
+    post:
+      consumes:
+      - application/json
+      description: Hủy phiên giữ nhiều vé trước thời hạn 5 phút, trả vé về trạng thái
+        Available cho người khác chọn.
+      parameters:
+      - description: Danh sách mã vé cần hủy giữ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReleaseTicketsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Giải phóng danh sách ghế giữ sớm
+      tags:
+      - tickets
+  /tickets/reset:
+    post:
+      description: Xóa sạch toàn bộ dữ liệu giao dịch và seeding lại 500 ghế trống
+        ban đầu.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset toàn bộ hệ thống
+      tags:
+      - tickets
+  /tickets/stats:
+    get:
+      description: Trả về số lượng vé đã bán, đang giữ, còn trống, tổng doanh thu
+        và số lượng chi tiết từng loại vé
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Stats'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy thống kê trạng thái vé
+      tags:
+      - tickets
+swagger: "2.0"
