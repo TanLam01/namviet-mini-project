@@ -168,7 +168,7 @@ _Lưu ý: Backend có tích hợp cơ chế tự động kết nối lại (retr
 
 #### Bước 1: Khởi động Database & Redis
 
-Bạn cần chạy Postgres (tạo sẵn Database tên `ticketbox`) và Redis cục bộ trên máy tính.
+Bạn cần chạy Postgres (sử dụng database mặc định tên `postgres` hoặc tạo sẵn database khác rồi cập nhật cấu hình `DB_NAME` trong tệp `.env`) và Redis cục bộ trên máy tính.
 
 #### Bước 2: Chạy Backend (Go)
 
