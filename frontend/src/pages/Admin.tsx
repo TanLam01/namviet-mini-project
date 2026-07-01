@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTickets } from '../context/TicketContext';
+import { useTickets } from '../hooks/useTickets';
 import { StatCard } from '../components/admin/StatCard';
 import { HoldingTable } from '../components/admin/HoldingTable';
 import { SoldTable } from '../components/admin/SoldTable';

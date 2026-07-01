@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTickets } from '../context/TicketContext';
+import { useTickets } from '../hooks/useTickets';
 import { Calendar, MapPin, Music, Ticket, ArrowRight, ShieldCheck, Flame } from 'lucide-react';
 
 export const Home = ({ onNavigate }) => {

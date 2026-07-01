@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { TicketProvider } from './context/TicketContext';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';

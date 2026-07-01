@@ -1,14 +1,5 @@
 import React from 'react';
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  subValue?: string | number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-  backgroundColor: string;
-  loading?: boolean;
-}
+import type { StatCardProps } from '../../types';
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, subValue, icon: Icon, color, backgroundColor, loading }) => {
   return (

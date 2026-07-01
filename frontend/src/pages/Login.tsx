@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { Lock, User, AlertCircle, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 
 export const Login = ({ isAdminMode = false, onNavigate }) => {
@@ -52,7 +52,7 @@ export const Login = ({ isAdminMode = false, onNavigate }) => {
         
         {/* Brand/Concert Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 text-2xl font-black bg-gradient-to-r from-white to-(--primary) bg-clip-text text-transparent mb-2">
+          <div className="inline-flex items-center gap-2 text-2xl font-black bg-linear-to-r from-white to-(--primary) bg-clip-text text-transparent mb-2">
             Anh Trai Say Hi
           </div>
           <p className="text-(--text-secondary) text-xs uppercase tracking-[0.2em] font-semibold">
@@ -63,7 +63,7 @@ export const Login = ({ isAdminMode = false, onNavigate }) => {
         {/* Glassmorphic Form Card */}
         <div className="glass-card p-8 border border-white/10 relative overflow-hidden">
           <div 
-            className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${
+            className={`absolute top-0 left-0 right-0 h-0.75 bg-linear-to-r ${
               isAdminMode ? 'from-red-500 to-amber-500' : 'from-(--primary) to-(--secondary)'
             }`}
           ></div>
@@ -97,6 +97,7 @@ export const Login = ({ isAdminMode = false, onNavigate }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -115,6 +116,7 @@ export const Login = ({ isAdminMode = false, onNavigate }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
+                  autoComplete="current-password"
                   required
                 />
               </div>
@@ -122,7 +124,7 @@ export const Login = ({ isAdminMode = false, onNavigate }) => {
 
             {/* Submit Button */}
             <button
-              className={`btn ${isAdminMode ? 'bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 border-none' : 'btn-primary'} py-3.5 mt-2 w-full text-sm font-bold flex items-center justify-center gap-2 cursor-pointer text-white`}
+              className={`btn ${isAdminMode ? 'bg-linear-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 border-none' : 'btn-primary'} py-3.5 mt-2 w-full text-sm font-bold flex items-center justify-center gap-2 cursor-pointer text-white`}
               type="submit"
               disabled={loading}
             >

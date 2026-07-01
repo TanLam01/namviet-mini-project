@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useTickets } from '../context/TicketContext';
+import { useTickets } from '../hooks/useTickets';
 import { TicketSeatGrid } from '../components/booking/TicketSeatGrid';
 import { TicketReceipt } from '../components/booking/TicketReceipt';
 import { CountdownTimer } from '../components/booking/CountdownTimer';
 import { AlertCircle, Clock, CreditCard, User, Mail, Phone, Ticket } from 'lucide-react';
+import { API_BASE } from '../constants';
 
 export const Booking = () => {
   const { 
@@ -25,6 +26,7 @@ export const Booking = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [lastBookedTicket, setLastBookedTicket] = useState(null);
+  const [idempotencyKey, setIdempotencyKey] = useState('');
 
   // Auto-sync form if user logs in/updates later
   useEffect(() => {
@@ -36,10 +38,27 @@ export const Booking = () => {
     if (savedPhone) setPhone(savedPhone);
   }, []);
 
-  // Form validation
-  const isFormValid = userName.trim() !== '' && email.trim() !== '' && phone.trim() !== '';
+  // Stabilize idempotencyKey per hold session
+  useEffect(() => {
+    if (currentUserHold && currentUserHold.ticketIds) {
+      setIdempotencyKey(prev => {
+        const prefix = `pay-${currentUserHold.ticketIds.sort().join('-')}`;
+        if (prev && prev.startsWith(prefix)) return prev;
+        return `${prefix}-${Date.now()}`;
+      });
+    } else {
+      setIdempotencyKey('');
+    }
+  }, [currentUserHold]);
 
-  const handleSelectTicket = (ticketId) => {
+  // Form validation with email and phone formats
+  const isFormValid = React.useMemo(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^0\d{9}$/;
+    return userName.trim() !== '' && emailRegex.test(email) && phoneRegex.test(phone);
+  }, [userName, email, phone]);
+
+  const handleSelectTicket = React.useCallback((ticketId) => {
     if (currentUserHold) return; // Cannot select other seats while holding
 
     setSelectedSeats(prev => {
@@ -56,7 +75,7 @@ export const Booking = () => {
       }
       return [...next].sort(); // Sắp xếp thứ tự bảng chữ cái để tránh bị nhảy vị trí (flicker)
     });
-  };
+  }, [currentUserHold]);
 
   const tempTotal = React.useMemo(() => {
     return selectedSeats.reduce((sum, id) => {
@@ -114,13 +133,13 @@ export const Booking = () => {
       const heldTickets = currentUserHold.tickets;
 
       // Add a client-side idempotency key for payment request!
-      const idempotencyKey = `pay-${ticketIds.join('-')}-${Date.now()}`;
+      const activeIdempotencyKey = idempotencyKey || `pay-${ticketIds.join('-')}-${Date.now()}`;
 
-      const res = await fetch(`http://localhost:8080/api/tickets/pay`, {
+      const res = await fetch(`${API_BASE}/api/tickets/pay`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey
+          'Idempotency-Key': activeIdempotencyKey
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -132,8 +151,19 @@ export const Booking = () => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Thanh toán thất bại!');
+        let errorMsg = 'Thanh toán thất bại!';
+        try {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errData = await res.json();
+            errorMsg = errData.error || errorMsg;
+          } else {
+            errorMsg = `Server error: ${res.status} ${res.statusText}`;
+          }
+        } catch {
+          // ignore
+        }
+        throw new Error(errorMsg);
       }
 
       // Successful confirmation
@@ -177,7 +207,7 @@ export const Booking = () => {
     <div className="flex flex-col gap-6">
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-extrabold">ĐẶT VÉ SỰ KIỆN</h1>
+        <h1 className="text-3xl font-extrabold pb-1">ĐẶT VÉ SỰ KIỆN</h1>
         <p className="text-(--text-secondary) text-sm">
           {currentUserHold 
             ? 'Vui lòng hoàn tất thông tin thanh toán trong thời gian giữ vé.' 
@@ -326,6 +356,7 @@ export const Booking = () => {
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     disabled={!currentUserHold || loading}
+                    autoComplete="name"
                     required
                   />
                 </div>
@@ -343,6 +374,7 @@ export const Booking = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={!currentUserHold || loading}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -360,6 +392,7 @@ export const Booking = () => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={!currentUserHold || loading}
+                    autoComplete="tel"
                     required
                   />
                 </div>

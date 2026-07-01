@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { Ticket, Home as HomeIcon, CalendarDays, ShieldAlert, LogOut, User, History } from 'lucide-react';
 
 export const Header = ({ currentPage, onNavigate }) => {

@@ -1,4 +1,5 @@
-import { TICKET_TYPES } from './constants';
+import React from 'react';
+import { TICKET_TYPES } from '../constants';
 
 export interface Ticket {
   id: string;
@@ -41,4 +42,42 @@ export interface TicketStoreState {
     total: number;
   };
   setSimulationActive: (active: boolean) => void;
+}
+
+export interface StatCardProps {
+  title: string;
+  value: string | number;
+  subValue?: string | number;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  backgroundColor: string;
+  loading?: boolean;
+}
+
+export interface HoldingCountdownProps {
+  expiryTime?: string | number | null;
+}
+
+export interface HoldingTableProps {
+  tickets: Ticket[];
+}
+
+export interface SoldTableProps {
+  tickets: Ticket[];
+}
+
+export interface SeatButtonProps {
+  id: string;
+  status: string;
+  isSelected: boolean;
+  loading: boolean;
+  onClick: (id: string) => void;
+}
+
+export interface TicketSeatGridProps {
+  tickets: Ticket[];
+  selectedType: string;
+  loading: boolean;
+  selectedSeats?: string[];
+  handleSelectTicket: (id: string) => void;
 }

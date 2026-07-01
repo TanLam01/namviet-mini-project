@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTickets } from '../context/TicketContext';
-import { useAuth } from '../context/AuthContext';
+import { useTickets } from '../hooks/useTickets';
+import { useAuth } from '../hooks/useAuth';
 import { Ticket, QrCode, Calendar, MapPin, Receipt } from 'lucide-react';
 
 export const History = ({ onNavigate }) => {
@@ -47,7 +47,7 @@ export const History = ({ onNavigate }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {myTickets.map((t, idx) => (
+        {myTickets.map(t => (
           <div 
             key={t.id}
             className="bg-black/30 border border-dashed border-white/15 rounded-md pt-5 px-5 pb-7 text-left flex flex-col gap-3 relative overflow-hidden shrink-0"

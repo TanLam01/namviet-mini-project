@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { queryClient } from '../queryClient';
-import { TICKET_TYPES, API_BASE } from './constants';
-import type { Ticket, TicketStoreState } from './types';
+import { TICKET_TYPES, API_BASE } from '../constants';
+import type { Ticket, TicketStoreState } from '../types';
 import * as mockService from './mockService';
 
 export const useTicketStore = create<TicketStoreState>()(
@@ -49,7 +49,7 @@ export const useTicketStore = create<TicketStoreState>()(
               }
             };
 
-            es.onerror = (err) => {
+            es.onerror = () => {
               console.warn("SSE disconnected, retrying in 5s...");
               es.close();
               setTimeout(() => {

@@ -1,9 +1,5 @@
 import React from 'react';
-import type { Ticket } from '../../store/useTicketStore';
-
-interface SoldTableProps {
-  tickets: Ticket[];
-}
+import type { Ticket, SoldTableProps } from '../../types';
 
 export const SoldTable: React.FC<SoldTableProps> = ({ tickets }) => {
   const soldTickets = tickets.filter((t: Ticket) => t.status === 'Sold');

@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Ticket } from '../../store/useTicketStore';
-
-interface HoldingCountdownProps {
-  expiryTime?: string | number | null;
-}
+import type { Ticket, HoldingCountdownProps, HoldingTableProps } from '../../types';
 
 const HoldingCountdown: React.FC<HoldingCountdownProps> = ({ expiryTime }) => {
   const targetTime = expiryTime ? (typeof expiryTime === 'string' ? new Date(expiryTime).getTime() : expiryTime) : 0;
@@ -40,9 +36,6 @@ const HoldingCountdown: React.FC<HoldingCountdownProps> = ({ expiryTime }) => {
   );
 };
 
-interface HoldingTableProps {
-  tickets: Ticket[];
-}
 
 export const HoldingTable: React.FC<HoldingTableProps> = ({ tickets }) => {
   const holdingTickets = tickets.filter((t: Ticket) => t.status === 'Holding');

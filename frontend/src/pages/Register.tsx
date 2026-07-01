@@ -3,8 +3,7 @@ import { User, Lock, Mail, Signature, Phone, ArrowLeft, AlertCircle, CheckCircle
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+import { API_BASE } from '../constants';
 
 const registerSchema = z.object({
   username: z.string()
@@ -137,6 +136,7 @@ export const Register = ({ onNavigate }: { onNavigate: (page: string) => void })
                     className="form-input pl-10 py-2.5"
                     type="text"
                     placeholder="Nhập tên đăng nhập"
+                    autoComplete="username"
                     {...register('username')}
                   />
                 </div>
@@ -157,6 +157,7 @@ export const Register = ({ onNavigate }: { onNavigate: (page: string) => void })
                     className="form-input pl-10 py-2.5"
                     type="password"
                     placeholder="Tối thiểu 6 ký tự"
+                    autoComplete="new-password"
                     {...register('password')}
                   />
                 </div>
@@ -177,6 +178,7 @@ export const Register = ({ onNavigate }: { onNavigate: (page: string) => void })
                     className="form-input pl-10 py-2.5"
                     type="text"
                     placeholder="Nguyễn Văn A"
+                    autoComplete="name"
                     {...register('fullName')}
                   />
                 </div>
@@ -197,6 +199,7 @@ export const Register = ({ onNavigate }: { onNavigate: (page: string) => void })
                     className="form-input pl-10 py-2.5"
                     type="email"
                     placeholder="email@example.com"
+                    autoComplete="email"
                     {...register('email')}
                   />
                 </div>
@@ -217,6 +220,7 @@ export const Register = ({ onNavigate }: { onNavigate: (page: string) => void })
                     className="form-input pl-10 py-2.5"
                     type="tel"
                     placeholder="0901234567"
+                    autoComplete="tel"
                     {...register('phone')}
                   />
                 </div>

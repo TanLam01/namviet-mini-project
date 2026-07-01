@@ -1,9 +1,18 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
+import { API_BASE } from '../constants';
 
-const AuthContext = createContext<any>(null);
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+export interface AuthContextType {
+  user: string | null;
+  role: string | null;
+  isAuthenticated: boolean;
+  login: (username: string, password: string) => Promise<{ success: boolean; role: string }>;
+  logout: () => Promise<void>;
+  loading: boolean;
+}
 
-export const AuthProvider = ({ children }: any) => {
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null); // 'admin' or 'user'
   const [loading, setLoading] = useState(true);
@@ -21,6 +30,10 @@ export const AuthProvider = ({ children }: any) => {
           const data = await res.json();
           setUser(data.user.fullName);
           setRole(data.user.role);
+          localStorage.setItem('ticketbox_user', data.user.fullName);
+          localStorage.setItem('ticketbox_role', data.user.role);
+          localStorage.setItem('ticketbox_email', data.user.email || '');
+          localStorage.setItem('ticketbox_phone', data.user.phone || '');
         } else {
           // Cookie unauthorized or expired, check mock fallback
           const savedUser = localStorage.getItem('ticketbox_user');
@@ -30,7 +43,7 @@ export const AuthProvider = ({ children }: any) => {
             setRole(savedRole);
           }
         }
-      } catch (err) {
+      } catch {
         console.warn("Auth check failed, checking mock session fallback...");
         const savedUser = localStorage.getItem('ticketbox_user');
         const savedRole = localStorage.getItem('ticketbox_role');
@@ -45,7 +58,7 @@ export const AuthProvider = ({ children }: any) => {
     restoreSession();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; role: string }> => {
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
@@ -58,15 +71,25 @@ export const AuthProvider = ({ children }: any) => {
         const data = await res.json();
         setUser(data.user.fullName);
         setRole(data.user.role);
-        // Clear local storage to avoid leaking credentials outside HttpOnly cookies
-        localStorage.removeItem('ticketbox_user');
-        localStorage.removeItem('ticketbox_role');
-        localStorage.removeItem('ticketbox_email');
-        localStorage.removeItem('ticketbox_phone');
+        localStorage.setItem('ticketbox_user', data.user.fullName);
+        localStorage.setItem('ticketbox_role', data.user.role);
+        localStorage.setItem('ticketbox_email', data.user.email || '');
+        localStorage.setItem('ticketbox_phone', data.user.phone || '');
         return { success: true, role: data.user.role };
       } else {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Đăng nhập thất bại!');
+        let errorMsg = 'Đăng nhập thất bại!';
+        try {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errData = await res.json();
+            errorMsg = errData.error || errorMsg;
+          } else {
+            errorMsg = `Server error: ${res.status} ${res.statusText}`;
+          }
+        } catch {
+          // ignore
+        }
+        throw new Error(errorMsg);
       }
     } catch (err: any) {
       // Check if it's a network error (backend offline)
@@ -121,32 +144,9 @@ export const AuthProvider = ({ children }: any) => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#0a0b10',
-        color: '#f8f9fa',
-        fontFamily: "'Plus Jakarta Sans', sans-serif"
-      }}>
-        <div style={{
-          width: '36px',
-          height: '36px',
-          border: '3px solid rgba(157, 78, 221, 0.1)',
-          borderTop: '3px solid #9d4edd',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-          marginBottom: '16px'
-        }}></div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        <span style={{ fontSize: '0.85rem', color: '#adb5bd', fontWeight: 600, letterSpacing: '0.5px' }}>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-[#0a0b10] text-[#f8f9fa] font-sans">
+        <div className="w-9 h-9 border-3 border-[rgba(157,78,221,0.1)] border-t-[#9d4edd] rounded-full animate-spin mb-4"></div>
+        <span className="text-[0.85rem] text-[#adb5bd] font-semibold tracking-[0.5px]">
           Đang xác thực phiên làm việc...
         </span>
       </div>
@@ -167,4 +167,4 @@ export const AuthProvider = ({ children }: any) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+

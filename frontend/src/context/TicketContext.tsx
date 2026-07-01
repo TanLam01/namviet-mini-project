@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTicketStore, Ticket } from '../store/useTicketStore';
+import { useTicketStore } from '../store/useTicketStore';
+import type { Ticket, TicketStoreState } from '../types';
+import { API_BASE } from '../constants';
 
-const TicketContext = createContext<any>(null);
+export interface TicketContextType extends TicketStoreState {
+  tickets: Ticket[];
+  ticketsLoading: boolean;
+}
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+export const TicketContext = createContext<TicketContextType | null>(null);
 
 // Query function to fetch tickets from Go API or read from local mock storage
 const fetchTicketsQuery = async (): Promise<Ticket[]> => {
@@ -23,15 +28,13 @@ const fetchTicketsQuery = async (): Promise<Ticket[]> => {
   return saved ? JSON.parse(saved) : [];
 };
 
-export const TicketProvider = ({ children }: any) => {
-  const initConnection = useTicketStore((state: any) => state.initConnection);
+export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
+  const initConnection = useTicketStore((state) => state.initConnection);
 
   // Initialize store connection, SSE and background intervals on mount
   useEffect(() => {
     initConnection();
   }, [initConnection]);
-
-  const isUsingBackend = useTicketStore((state: any) => state.isUsingBackend);
 
   // Use TanStack Query to fetch and cache tickets list with initialData fallback (SWR)
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery<Ticket[]>({
@@ -64,10 +67,10 @@ export const TicketProvider = ({ children }: any) => {
   });
 
   // Pull store values and pass through the context provider
-  const store = useTicketStore() as any;
+  const store = useTicketStore();
 
   // Combine query tickets state and loading into the context value
-  const contextValue = {
+  const contextValue: TicketContextType = {
     ...store,
     tickets,
     ticketsLoading,
@@ -80,4 +83,3 @@ export const TicketProvider = ({ children }: any) => {
   );
 };
 
-export const useTickets = () => useContext(TicketContext);

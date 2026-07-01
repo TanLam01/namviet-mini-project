@@ -1,5 +1,5 @@
-import { Ticket, CurrentUserHold } from './types';
-import { TICKET_TYPES } from './constants';
+import { Ticket, CurrentUserHold } from '../types';
+import { TICKET_TYPES } from '../constants';
 import { queryClient } from '../queryClient';
 
 export const getInitialTickets = (): Ticket[] => {
