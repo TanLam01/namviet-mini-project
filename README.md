@@ -11,25 +11,28 @@ Dự án này là bài thi kỹ thuật (Technical Test) xây dựng hệ thốn
 - **Email**: tattanlam.work@gmail.com
 
 ### Tài khoản thử nghiệm (Đã có sẵn trong Database):
+
 Hệ thống tự động Seed tài khoản mặc định khi khởi chạy dự án:
 
-| Quyền hạn | Tên đăng nhập (Username) | Mật khẩu (Password) |
-| :--- | :--- | :--- |
-| **Khách hàng (User)** | `user` | `user123` |
-| **Quản trị viên (Admin)** | `admin` | `admin123` |
+| Quyền hạn                 | Tên đăng nhập (Username) | Mật khẩu (Password) |
+| :------------------------ | :----------------------- | :------------------ |
+| **Khách hàng (User)**     | `user`                   | `user123`           |
+| **Quản trị viên (Admin)** | `admin`                  | `admin123`          |
 
 ---
 
 ## 2. CÁC TÍNH NĂNG CHÍNH & CƠ CHẾ GIẢ LẬP CHỊU TẢI (SIMULATOR)
 
 ### Các tính năng cốt lõi đã hoàn thiện:
-* **Sơ đồ ghế ngồi động (Real-time Seat Map)**: 500 ghế chia làm 3 hạng vé (VIP, GA, Standard) được cập nhật trạng thái giữ/bán/hủy tức thời cho tất cả các client đang xem thông qua Server-Sent Events (SSE).
-* **Đồng hồ đếm ngược giữ vé (5-Minute Hold Timer)**: Khóa giữ vé độc quyền trong 5 phút. Có background worker tự động quét và giải phóng vé quá hạn để trả lại sơ đồ nếu người dùng không thanh toán.
-* **Quy trình thanh toán Idempotent (Chống trùng lặp)**: Áp dụng cơ chế Idempotency Control ngăn chặn trừ tiền hai lần hoặc tạo trùng hóa đơn khi bấm thanh toán nhiều lần.
-* **Trang Admin & Quản trị**: Theo dõi doanh thu thực tế, số lượng vé bán, biểu đồ phân tích trạng thái vé, và nút Reset toàn bộ hệ thống về trạng thái ban đầu chỉ với 1 click.
-* **Code Splitting & Tối ưu hóa dung lượng**: Giảm tải ban đầu, tách biệt hoàn toàn mã nguồn trang Admin để tăng tốc độ tải trang và bảo mật.
+
+- **Sơ đồ ghế ngồi động (Real-time Seat Map)**: 500 ghế chia làm 3 hạng vé (VIP, GA, Standard) được cập nhật trạng thái giữ/bán/hủy tức thời cho tất cả các client đang xem thông qua Server-Sent Events (SSE).
+- **Đồng hồ đếm ngược giữ vé (5-Minute Hold Timer)**: Khóa giữ vé độc quyền trong 5 phút. Có background worker tự động quét và giải phóng vé quá hạn để trả lại sơ đồ nếu người dùng không thanh toán.
+- **Quy trình thanh toán Idempotent (Chống trùng lặp)**: Áp dụng cơ chế Idempotency Control ngăn chặn trừ tiền hai lần hoặc tạo trùng hóa đơn khi bấm thanh toán nhiều lần.
+- **Trang Admin & Quản trị**: Theo dõi doanh thu thực tế, số lượng vé bán, biểu đồ phân tích trạng thái vé, và nút Reset toàn bộ hệ thống về trạng thái ban đầu chỉ với 1 click.
+- **Code Splitting & Tối ưu hóa dung lượng**: Giảm tải ban đầu, tách biệt hoàn toàn mã nguồn trang Admin để tăng tốc độ tải trang và bảo mật.
 
 ### Hướng dẫn kiểm thử tính năng chịu tải và tranh chấp ghế (Concurrency Load Test):
+
 Dự án được tích hợp sẵn một **Hệ thống Giả lập tự động (Simulator)** ở trang Admin để người kiểm thử có thể trực tiếp quan sát cách hệ thống xử lý tranh chấp:
 
 1. Đăng nhập tài khoản Quản trị viên (`admin` / `admin123`) và truy cập trang **Admin**.
@@ -66,7 +69,7 @@ sequenceDiagram
 
     FE->>BE: 1. Gửi yêu cầu giữ vé (VIP-001)
     BE->>Redis: 2. Set Distributed Lock (SET NX lock:ticket:VIP-001)
-    
+
     Note over BE,Redis: --- Giai đoạn 1: Redis Mutex Lock ---
     alt Lock Thất Bại (Vé đang được thao tác)
         Redis-->>BE: Lock failed
@@ -77,7 +80,7 @@ sequenceDiagram
 
     Note over BE,DB: --- Giai đoạn 2: DB Transaction (Nếu Lock Thành Công) ---
     BE->>DB: 3. SELECT * FROM tickets WHERE id = 'VIP-001' FOR UPDATE
-    
+
     alt Trạng thái vé là 'Available'
         BE->>DB: 4. UPDATE tickets SET status = 'Holding'
         BE->>Redis: 5. Lưu Hold Session: key 'ticket:hold:VIP-001' (TTL 5 mins)
@@ -153,7 +156,7 @@ Khuyến khích chạy dự án bằng **Docker Compose** để tự động cà
 1. Đảm bảo máy tính của bạn đã cài đặt **Docker** và **Docker Desktop** (hoặc Docker Compose).
 2. Mở terminal tại thư mục gốc của dự án (`ticketbox`) và chạy lệnh:
    ```bash
-   docker compose up --build
+   docker compose up -d --build
    ```
 3. Sau khi Docker build và khởi động thành công các container:
    - **Frontend Web Application**: Truy cập tại [http://localhost:3000](http://localhost:3000)
