@@ -22,7 +22,7 @@ function MainApp() {
     if (isAuthenticated) {
       if (role === 'admin') {
         setCurrentPage('admin');
-      } else if (role === 'user' && (currentPage === 'admin' || currentPage === 'register' || currentPage === 'login-admin')) {
+      } else if (role === 'user' && (currentPage === 'admin' || currentPage === 'register' || currentPage === 'login-admin' || currentPage === 'login')) {
         setCurrentPage('home');
       }
     } else {
