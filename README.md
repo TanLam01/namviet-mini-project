@@ -35,22 +35,27 @@ sequenceDiagram
 
     FE->>BE: 1. Gửi yêu cầu giữ vé (VIP-001)
     BE->>Redis: 2. Set Distributed Lock (SET NX lock:ticket:VIP-001)
+    
+    Note over BE,Redis: --- Giai đoạn 1: Redis Mutex Lock ---
     alt Lock Thất Bại (Vé đang được thao tác)
         Redis-->>BE: Lock failed
         BE-->>FE: Trả về 409: Vé đang được xử lý, thử lại sau!
     else Lock Thành Công (Độc quyền thao tác)
         Redis-->>BE: Lock success
-        BE->>DB: 3. SELECT * FROM tickets WHERE id = 'VIP-001' FOR UPDATE
-        alt Trạng thái vé là 'Available'
-            BE->>DB: 4. UPDATE tickets SET status = 'Holding'
-            BE->>Redis: 5. Lưu Hold Session: key "ticket:hold:VIP-001" (TTL 5 mins)
-            BE->>Redis: 6. Xóa lock: "lock:ticket:VIP-001"
-            BE-->>FE: Trả về 200: Giữ vé thành công! Bắt đầu countdown 5p.
-            Note over BE: Phát tín hiệu SSE thông báo mã vé VIP-001 đã bị khóa
-        else Trạng thái vé đã thay đổi (Sold/Holding)
-            BE->>Redis: Xóa lock: "lock:ticket:VIP-001"
-            BE-->>FE: Trả về 409: Vé đã bị chọn trước đó 1ms!
-        end
+    end
+
+    Note over BE,DB: --- Giai đoạn 2: DB Transaction (Nếu Lock Thành Công) ---
+    BE->>DB: 3. SELECT * FROM tickets WHERE id = 'VIP-001' FOR UPDATE
+    
+    alt Trạng thái vé là 'Available'
+        BE->>DB: 4. UPDATE tickets SET status = 'Holding'
+        BE->>Redis: 5. Lưu Hold Session: key 'ticket:hold:VIP-001' (TTL 5 mins)
+        BE->>Redis: 6. Giải phóng lock: 'lock:ticket:VIP-001'
+        BE-->>FE: Trả về 200: Giữ vé thành công! Bắt đầu countdown 5p.
+        Note over BE: Phát tín hiệu SSE thông báo mã vé VIP-001 đã bị khóa
+    else Trạng thái vé đã thay đổi (Sold/Holding)
+        BE->>Redis: Giải phóng lock: 'lock:ticket:VIP-001'
+        BE-->>FE: Trả về 409: Vé đã bị chọn trước đó!
     end
 ```
 
