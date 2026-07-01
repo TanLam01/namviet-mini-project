@@ -41,6 +41,11 @@ function MainApp() {
     }
   }, [role, isAuthenticated, currentPage]);
 
+  // Scroll to top on page navigation
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
   if (!isAuthenticated) {
     if (currentPage === 'register') {
       return (
