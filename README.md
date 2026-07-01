@@ -20,7 +20,30 @@ Hệ thống tự động Seed tài khoản mặc định khi khởi chạy dự
 
 ---
 
-## 2. KIẾN TRÚC HỆ THỐNG & GIẢI PHÁP KỸ THUẬT
+## 2. CÁC TÍNH NĂNG CHÍNH & CƠ CHẾ GIẢ LẬP CHỊU TẢI (SIMULATOR)
+
+### Các tính năng cốt lõi đã hoàn thiện:
+* **Sơ đồ ghế ngồi động (Real-time Seat Map)**: 500 ghế chia làm 3 hạng vé (VIP, GA, Standard) được cập nhật trạng thái giữ/bán/hủy tức thời cho tất cả các client đang xem thông qua Server-Sent Events (SSE).
+* **Đồng hồ đếm ngược giữ vé (5-Minute Hold Timer)**: Khóa giữ vé độc quyền trong 5 phút. Có background worker tự động quét và giải phóng vé quá hạn để trả lại sơ đồ nếu người dùng không thanh toán.
+* **Quy trình thanh toán Idempotent (Chống trùng lặp)**: Áp dụng cơ chế Idempotency Control ngăn chặn trừ tiền hai lần hoặc tạo trùng hóa đơn khi bấm thanh toán nhiều lần.
+* **Trang Admin & Quản trị**: Theo dõi doanh thu thực tế, số lượng vé bán, biểu đồ phân tích trạng thái vé, và nút Reset toàn bộ hệ thống về trạng thái ban đầu chỉ với 1 click.
+* **Code Splitting & Tối ưu hóa dung lượng**: Giảm tải ban đầu, tách biệt hoàn toàn mã nguồn trang Admin để tăng tốc độ tải trang và bảo mật.
+
+### Hướng dẫn kiểm thử tính năng chịu tải và tranh chấp ghế (Concurrency Load Test):
+Dự án được tích hợp sẵn một **Hệ thống Giả lập tự động (Simulator)** ở trang Admin để người kiểm thử có thể trực tiếp quan sát cách hệ thống xử lý tranh chấp:
+
+1. Đăng nhập tài khoản Quản trị viên (`admin` / `admin123`) và truy cập trang **Admin**.
+2. Tìm và kích hoạt nút **"Kích hoạt Giả lập (Simulator)"** (giả lập 20-50 users mua vé liên tục).
+3. Hệ thống sẽ tự động bật các tiến trình ảo lập trình sẵn:
+   - Các luồng giả lập người dùng ảo liên tục gửi request đặt giữ các ghế ngẫu nhiên.
+   - Mô phỏng người dùng mua vé thành công, hủy giữ vé, hoặc để vé tự động hết hạn 5 phút.
+4. Mở song song một tab trình duyệt khác đăng nhập tài khoản Khách hàng (`user` / `user123`) tại trang **Đặt vé**:
+   - Bạn sẽ nhìn thấy sơ đồ ghế liên tục thay đổi trạng thái nhấp nháy theo thời gian thực (Đang giữ vé màu vàng, Đã bán màu đỏ, Ghế trống màu xám/xanh/tím).
+   - Hãy thử click tranh ghế với Simulator: Bạn sẽ thấy hệ thống trả về thông báo lỗi tranh chấp tức thì (`409 Conflict`) nếu ghế đó đã bị luồng giả lập của admin chiếm trước dù chỉ 1ms, chứng minh tính toàn vẹn dữ liệu hoàn hảo dưới tải cao.
+
+---
+
+## 3. KIẾN TRÚC HỆ THỐNG & GIẢI PHÁP KỸ THUẬT
 
 Hệ thống được thiết kế theo mô hình **Clean Architecture** (Kiến trúc sạch) nhằm độc lập hóa các lớp nghiệp vụ, tách biệt phần cơ sở dữ liệu và Web framework:
 
@@ -81,7 +104,7 @@ sequenceDiagram
 
 ---
 
-## 3. CẤU TRÚC THƯ MỤC BACKEND & FRONTEND
+## 4. CẤU TRÚC THƯ MỤC BACKEND & FRONTEND
 
 ```text
 ticketbox/
@@ -121,7 +144,7 @@ ticketbox/
 
 ---
 
-## 4. HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN
+## 5. HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN
 
 Khuyến khích chạy dự án bằng **Docker Compose** để tự động cài đặt môi trường mà không cần cài đặt cục bộ Go, Node.js, Postgres hay Redis.
 
