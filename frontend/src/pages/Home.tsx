@@ -171,9 +171,9 @@ export const Home = ({ onNavigate }) => {
         {/* Real-time activity ticker */}
         <section className="glass-card p-6">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Ticket size={18} className="logo-icon" /> hoạt động giao dịch gần đây
+            <Ticket size={18} className="logo-icon" /> Hoạt động giao dịch gần đây
           </h3>
-          <div className="flex flex-col gap-3 min-h-50">
+          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 min-h-50 custom-scrollbar">
             {ticketsLoading && activities.length === 0 ? (
               <div className="flex flex-col gap-3">
                 <div className="h-10 w-full bg-white/5 animate-pulse rounded-sm border-l-3 border-white/10"></div>
