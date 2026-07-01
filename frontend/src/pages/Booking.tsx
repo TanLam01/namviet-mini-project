@@ -3,7 +3,10 @@ import { useTickets } from '../hooks/useTickets';
 import { TicketSeatGrid } from '../components/booking/TicketSeatGrid';
 import { TicketReceipt } from '../components/booking/TicketReceipt';
 import { CountdownTimer } from '../components/booking/CountdownTimer';
-import { AlertCircle, Clock, CreditCard, User, Mail, Phone, Ticket } from 'lucide-react';
+import { CheckoutForm } from '../components/booking/CheckoutForm';
+import { HoldSummary } from '../components/booking/HoldSummary';
+import { SelectionSummary } from '../components/booking/SelectionSummary';
+import { AlertCircle, Clock } from 'lucide-react';
 import { API_BASE } from '../constants';
 
 export const Booking = () => {
@@ -224,10 +227,7 @@ export const Booking = () => {
 
       {/* Main Grid Layout */}
       <div className="grid-main-booking">
-        {/* Left Area: Grid or Hold summary */}
-        {/* We keep the grid container always mounted to prevent DOM reconstruction flicker when switching back */}
         <div className={`glass-card p-6 flex flex-col gap-6 ${currentUserHold ? 'hidden' : ''}`}>
-          {/* Type selector tab */}
           <div className="flex gap-3 border-b border-(--border-color) pb-4 flex-wrap">
             {['VIP', 'GA', 'STANDARD'].map(type => (
               <button
@@ -250,25 +250,12 @@ export const Booking = () => {
           />
 
           {/* Floating Selection summary */}
-          {selectedSeats.length > 0 && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fadeIn">
-              <div>
-                <p className="text-sm font-bold text-emerald-400">
-                  Đang chọn {selectedSeats.length} ghế: {selectedSeats.join(', ')}
-                </p>
-                <p className="text-xs text-(--text-secondary)">
-                  Tạm tính: <strong>{tempTotal.toLocaleString('vi-VN')} VNĐ</strong>
-                </p>
-              </div>
-              <button 
-                onClick={handleHoldSelectedSeats}
-                className="btn btn-primary bg-emerald-500 hover:bg-emerald-400 text-black border-none py-2.5 px-6 text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all"
-                disabled={loading}
-              >
-                <Ticket size={14} /> {loading ? 'Đang giữ...' : 'Giữ các vé đã chọn'}
-              </button>
-            </div>
-          )}
+          <SelectionSummary
+            selectedSeats={selectedSeats}
+            tempTotal={tempTotal}
+            onHold={handleHoldSelectedSeats}
+            loading={loading}
+          />
           
           {loading && selectedSeats.length > 0 && (
             <div className="text-center p-4 text-(--text-secondary)">
@@ -278,42 +265,11 @@ export const Booking = () => {
         </div>
 
         {currentUserHold && (
-          <div className="glass-card p-8 flex flex-col gap-6 border border-(--border-color-active) animate-fadeIn">
-            <div className="flex items-center gap-3 text-(--secondary)">
-              <AlertCircle size={28} />
-              <div>
-                <h3 className="text-xl font-extrabold">Đã giữ vé thành công!</h3>
-                <p className="text-(--text-secondary) text-sm">Các ghế đã được khóa tạm thời cho bạn.</p>
-              </div>
-            </div>
-
-            <div className="p-5 bg-black/20 rounded-sm border border-(--border-color)">
-              <div className="flex justify-between mb-3 border-b border-white/5 pb-2">
-                <span className="text-(--text-secondary)">Mã ghế giữ ({currentUserHold.ticketIds.length} vé):</span>
-                <strong className="text-(--primary) text-base break-words text-right max-w-[60%]">
-                  {currentUserHold.ticketIds.join(', ')}
-                </strong>
-              </div>
-              <div className="flex justify-between mb-3">
-                <span className="text-(--text-secondary)">Hạng vé:</span>
-                <strong className="font-bold">{currentUserHold.tickets[0]?.type}</strong>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-white/5">
-                <span className="text-(--text-secondary)">Tổng số tiền:</span>
-                <strong className="text-(--secondary) font-black text-xl">
-                  {currentUserHold.totalPrice.toLocaleString('vi-VN')} VNĐ
-                </strong>
-              </div>
-            </div>
-
-            <button 
-              className="btn btn-secondary self-start cursor-pointer font-bold" 
-              onClick={handleCancelHold} 
-              disabled={loading}
-            >
-              Hủy chọn vé này
-            </button>
-          </div>
+          <HoldSummary
+            currentUserHold={currentUserHold}
+            onCancel={handleCancelHold}
+            loading={loading}
+          />
         )}
 
         {/* Right Area: Timer & Checkout Form */}
@@ -337,76 +293,18 @@ export const Booking = () => {
             </div>
           )}
 
-          {/* Checkout Form */}
-          <div className="glass-card p-6">
-            <h3 className="text-[1.1rem] font-bold mb-5 flex items-center gap-2">
-              <CreditCard size={18} className="logo-icon" /> THÔNG TIN THANH TOÁN
-            </h3>
-
-            <form onSubmit={handlePaymentSubmit}>
-              <div className="form-group">
-                <label className="form-label mb-1.5" htmlFor="fullName">Họ và tên *</label>
-                <div className="relative">
-                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)" />
-                  <input
-                    id="fullName"
-                    className="form-input pl-10"
-                    type="text"
-                    placeholder="Nguyễn Văn A"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    disabled={!currentUserHold || loading}
-                    autoComplete="name"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label mb-1.5" htmlFor="email">Địa chỉ Email *</label>
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)" />
-                  <input
-                    id="email"
-                    className="form-input pl-10"
-                    type="email"
-                    placeholder="nguyenvana@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={!currentUserHold || loading}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label mb-1.5" htmlFor="phone">Số điện thoại *</label>
-                <div className="relative">
-                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)" />
-                  <input
-                    id="phone"
-                    className="form-input pl-10"
-                    type="tel"
-                    placeholder="0901234567"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={!currentUserHold || loading}
-                    autoComplete="tel"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                className="btn btn-primary w-full mt-4 py-3.5 cursor-pointer font-bold"
-                type="submit"
-                disabled={!currentUserHold || !isFormValid || loading}
-              >
-                {loading ? 'Đang thanh toán...' : 'Thanh toán ngay'}
-              </button>
-            </form>
-          </div>
+          <CheckoutForm
+            userName={userName}
+            setUserName={setUserName}
+            email={email}
+            setEmail={setEmail}
+            phone={phone}
+            setPhone={setPhone}
+            disabled={!currentUserHold}
+            loading={loading}
+            isFormValid={isFormValid}
+            onSubmit={handlePaymentSubmit}
+          />
 
         </div>
       </div>

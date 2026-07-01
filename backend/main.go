@@ -9,6 +9,7 @@ import (
 	delivery "backend/delivery/http"
 	"backend/delivery/sse"
 	"backend/domain"
+	"backend/middleware"
 	"backend/repository"
 	"backend/usecase"
 
@@ -18,27 +19,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		if origin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-		} else {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		}
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, Idempotency-Key")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "X-Cache-Idempotency")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
-}
 
 // @title           Mini Ticketbox API
 // @version         1.0
@@ -91,8 +72,8 @@ func main() {
 
 	r := gin.Default()
 	_ = r.SetTrustedProxies(nil) // Khai báo bảo mật không sử dụng proxy trung gian
-	r.Use(CORSMiddleware())
-	r.Use(delivery.IdempotencyMiddleware(config.Redis))
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.IdempotencyMiddleware(config.Redis))
 
 	// Swagger UI Route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

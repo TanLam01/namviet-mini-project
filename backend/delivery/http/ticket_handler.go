@@ -5,6 +5,7 @@ import (
 
 	"backend/delivery/sse"
 	"backend/domain"
+	"backend/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
@@ -13,25 +14,7 @@ type TicketHandler struct {
 	useCase domain.TicketUseCase
 }
 
-// AdminMiddleware checks if the current user has the admin role
-func AdminMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userVal, exists := c.Get("currentUser")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Yêu cầu đăng nhập!"})
-			c.Abort()
-			return
-		}
 
-		user, ok := userVal.(*domain.User)
-		if !ok || user.Role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này!"})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
 
 // NewTicketHandler maps routes to handlers, applying Auth/Admin middlewares
 func NewTicketHandler(r *gin.RouterGroup, uc domain.TicketUseCase, rdb *redis.Client) {
@@ -46,14 +29,14 @@ func NewTicketHandler(r *gin.RouterGroup, uc domain.TicketUseCase, rdb *redis.Cl
 
 	// Protected routes (requires user login)
 	authGroup := r.Group("")
-	authGroup.Use(AuthMiddleware(rdb))
+	authGroup.Use(middleware.AuthMiddleware(rdb))
 	{
 		authGroup.POST("/tickets/hold", h.HoldTickets)
 		authGroup.POST("/tickets/pay", h.ConfirmPayment)
 		authGroup.POST("/tickets/release", h.ReleaseTickets)
-
+ 
 		// Admin-only route
-		authGroup.POST("/tickets/reset", AdminMiddleware(), h.ResetAllTickets)
+		authGroup.POST("/tickets/reset", middleware.AdminMiddleware(), h.ResetAllTickets)
 	}
 }
 

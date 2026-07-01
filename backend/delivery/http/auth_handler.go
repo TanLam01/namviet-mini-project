@@ -44,35 +44,7 @@ func generateSessionID() string {
 	return hex.EncodeToString(b)
 }
 
-// AuthMiddleware extracts session cookie, checks Redis, and injects user context
-func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		sessionID, err := c.Cookie("ticketbox_session")
-		if err != nil || sessionID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Yêu cầu đăng nhập để thực hiện thao tác này!"})
-			c.Abort()
-			return
-		}
 
-		sessionKey := fmt.Sprintf("session:%s", sessionID)
-		userJSON, err := rdb.Get(c.Request.Context(), sessionKey).Result()
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Phiên làm việc đã hết hạn hoặc không hợp lệ!"})
-			c.Abort()
-			return
-		}
-
-		var user domain.User
-		if err := json.Unmarshal([]byte(userJSON), &user); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi dữ liệu phiên!"})
-			c.Abort()
-			return
-		}
-
-		c.Set("currentUser", &user)
-		c.Next()
-	}
-}
 
 // Login verifies user credentials, starts a Redis session, and sets a HttpOnly cookie
 func (h *AuthHandler) Login(c *gin.Context) {
