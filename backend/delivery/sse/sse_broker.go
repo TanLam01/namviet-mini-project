@@ -94,11 +94,17 @@ func (b *SSEBroker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// BroadcastUpdate triggers SSE message to notify clients to refresh
-func BroadcastUpdate(action string, ticketId string) {
-	data := map[string]string{
-		"action":   action,   // e.g., "held", "released", "sold"
+// BroadcastUpdate triggers SSE message to notify clients to refresh with delta payloads
+func BroadcastUpdate(action string, ticketId string, heldBy string, expiry int64) {
+	data := map[string]interface{}{
+		"action":   action,   // e.g., "held", "released", "sold", "reset"
 		"ticketId": ticketId, // e.g., "VIP-001"
+	}
+	if heldBy != "" {
+		data["heldBy"] = heldBy
+	}
+	if expiry > 0 {
+		data["expiry"] = expiry
 	}
 	bytes, err := json.Marshal(data)
 	if err == nil {

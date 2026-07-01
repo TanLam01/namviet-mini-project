@@ -47,7 +47,7 @@ func (u *ticketUseCase) ConfirmPayment(ctx context.Context, ticketIds []string, 
 func (u *ticketUseCase) ResetAllTickets() error {
 	err := u.repo.ResetAllTickets()
 	if err == nil {
-		go sse.BroadcastUpdate("reset", "")
+		go sse.BroadcastUpdate("reset", "", "", 0)
 	}
 	return err
 }

@@ -42,7 +42,41 @@ export const useTicketStore = create<TicketStoreState>()(
               try {
                 const data = JSON.parse(event.data);
                 if (data.action) {
-                  queryClient.invalidateQueries({ queryKey: ['tickets'] });
+                  if (data.action === 'reset') {
+                    queryClient.invalidateQueries({ queryKey: ['tickets'] });
+                    return;
+                  }
+
+                  queryClient.setQueryData(['tickets'], (oldTickets: any) => {
+                    if (!oldTickets) return [];
+                    return oldTickets.map((t: any) => {
+                      if (t.id === data.ticketId) {
+                        if (data.action === 'held') {
+                          return {
+                            ...t,
+                            status: 'Holding',
+                            heldBy: data.heldBy,
+                            holdExpiry: data.expiry
+                          };
+                        } else if (data.action === 'released') {
+                          return {
+                            ...t,
+                            status: 'Available',
+                            heldBy: null,
+                            holdExpiry: null
+                          };
+                        } else if (data.action === 'sold') {
+                          return {
+                            ...t,
+                            status: 'Sold',
+                            heldBy: data.heldBy,
+                            holdExpiry: null
+                          };
+                        }
+                      }
+                      return t;
+                    });
+                  });
                 }
               } catch (err) {
                 console.error("SSE parse error:", err);
@@ -116,7 +150,16 @@ export const useTicketStore = create<TicketStoreState>()(
               totalPrice
             }
           });
-          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+          
+          // Perform direct local cache mutation immediately upon success
+          queryClient.setQueryData(['tickets'], (oldTickets: any) => {
+            if (!oldTickets) return [];
+            return oldTickets.map((t: any) => 
+              sortedTicketIds.includes(t.id) 
+                ? { ...t, status: 'Holding', heldBy: userName || 'Khách hàng', holdExpiry: expiryTime } 
+                : t
+            );
+          });
           return;
         }
 
@@ -140,7 +183,16 @@ export const useTicketStore = create<TicketStoreState>()(
               body: JSON.stringify({ ticketIds: currentUserHold.ticketIds }),
               credentials: 'include'
             });
-            queryClient.invalidateQueries({ queryKey: ['tickets'] });
+            
+            // Perform direct local cache mutation
+            queryClient.setQueryData(['tickets'], (oldTickets: any) => {
+              if (!oldTickets) return [];
+              return oldTickets.map((t: any) => 
+                currentUserHold.ticketIds.includes(t.id) 
+                  ? { ...t, status: 'Available', heldBy: null, holdExpiry: null } 
+                  : t
+              );
+            });
           } catch (err) {
             console.error("Error releasing hold:", err);
           }
@@ -152,8 +204,16 @@ export const useTicketStore = create<TicketStoreState>()(
         if (!currentUserHold) throw new Error('Phiên giữ vé đã hết hạn!');
 
         if (isUsingBackend) {
+          // Perform direct local cache mutation
+          queryClient.setQueryData(['tickets'], (oldTickets: any) => {
+            if (!oldTickets) return [];
+            return oldTickets.map((t: any) => 
+              currentUserHold.ticketIds.includes(t.id) 
+                ? { ...t, status: 'Sold', heldBy: customerInfo.fullName, holdExpiry: null } 
+                : t
+            );
+          });
           set({ currentUserHold: null });
-          queryClient.invalidateQueries({ queryKey: ['tickets'] });
           return;
         }
 

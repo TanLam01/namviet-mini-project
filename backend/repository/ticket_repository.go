@@ -162,6 +162,9 @@ func (r *postgresTicketRepository) HoldTickets(ctx context.Context, ticketIds []
 		lockedKeys = append(lockedKeys, lockKey)
 	}
 
+	expiryTime := time.Now().UTC().Add(expiryDuration)
+	expiryTimeMs := expiryTime.UnixMilli()
+
 	// 2. Chạy PostgreSQL Transaction (SELECT FOR UPDATE)
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var dbTickets []domain.Ticket
@@ -179,7 +182,6 @@ func (r *postgresTicketRepository) HoldTickets(ctx context.Context, ticketIds []
 			}
 		}
 
-		expiryTime := time.Now().UTC().Add(expiryDuration)
 		for _, ticket := range dbTickets {
 			ticket.Status = "Holding"
 			ticket.HoldExpiry = &expiryTime
@@ -205,7 +207,7 @@ func (r *postgresTicketRepository) HoldTickets(ctx context.Context, ticketIds []
 
 	// Phát tín hiệu SSE real-time báo giữ vé
 	for _, ticketId := range ticketIds {
-		go sse.BroadcastUpdate("held", ticketId)
+		go sse.BroadcastUpdate("held", ticketId, buyerName, expiryTimeMs)
 	}
 
 	return nil
@@ -263,7 +265,7 @@ func (r *postgresTicketRepository) ReleaseTickets(ctx context.Context, ticketIds
 
 	// Phát tín hiệu SSE báo nhả vé
 	for _, ticketId := range ticketIds {
-		go sse.BroadcastUpdate("released", ticketId)
+		go sse.BroadcastUpdate("released", ticketId, "", 0)
 	}
 
 	return nil
@@ -318,7 +320,7 @@ func (r *postgresTicketRepository) ConfirmPayment(ctx context.Context, ticketIds
 
 	// Phát tín hiệu SSE báo đã bán
 	for _, ticketId := range ticketIds {
-		go sse.BroadcastUpdate("sold", ticketId)
+		go sse.BroadcastUpdate("sold", ticketId, fullName, 0)
 	}
 
 	return nil
