@@ -38,7 +38,7 @@ export const History = ({ onNavigate }) => {
   return (
     <div className="flex flex-col gap-6 max-w-200 mx-auto">
       <div>
-        <h1 className="text-3xl font-extrabold flex items-center gap-2">
+        <h1 className="text-3xl font-extrabold flex items-center gap-2 pb-1">
           <Receipt className="text-(--secondary)" /> LỊCH SỬ MUA VÉ
         </h1>
         <p className="text-(--text-secondary) text-sm">
