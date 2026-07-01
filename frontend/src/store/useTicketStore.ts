@@ -11,7 +11,7 @@ export const useTicketStore = create<TicketStoreState>()(
       // --- STATE ---
       currentUserHold: null,
       isUsingBackend: false, // Được tự động khôi phục bởi Zustand Persist Middleware từ localStorage
-      simulationActive: true,
+      simulationActive: false,
       ticketTypes: TICKET_TYPES,
 
       // --- SYSTEM INITIALIZATION ---
@@ -280,7 +280,6 @@ export const useTicketStore = create<TicketStoreState>()(
       name: 'mini-ticketbox-zustand-v3',
       partialize: (state) => ({
         currentUserHold: state.currentUserHold,
-        simulationActive: state.simulationActive,
         isUsingBackend: state.isUsingBackend
       })
     }
