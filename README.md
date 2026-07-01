@@ -58,12 +58,17 @@ sequenceDiagram
 
 1. **Pessimistic Locking (`SELECT ... FOR UPDATE`)**: Khi luồng chạy qua lớp DB trong Postgres transaction, dòng dữ liệu của vé cụ thể sẽ bị khóa chặt. Không có bất kỳ giao dịch nào khác có thể ghi hoặc đọc-khóa trên dòng đó cho đến khi transaction hiện tại được Commit hoặc Rollback. Tránh hoàn toàn việc bán trùng vé.
 2. **Redis Distributed Lock (SET NX)**: Đóng vai trò là chốt chặn đầu tiên (cửa ngõ) ở RAM trước khi request chạm vào DB, giúp bảo vệ DB khỏi nghẽn I/O khi có hàng ngàn click spam cùng lúc vào một vị trí vé.
-3. **Background Expiry Worker**: Một Goroutine ngầm chạy độc lập mỗi 3 giây quét DB để tự động reset các vé ở trạng thái `Holding` có `hold_expiry` nhỏ hơn thời gian hiện tại về trạng thái `Available` (nếu hết 5 phút mà user chưa thanh toán).
-4. **SSE Real-time Broadcast**: Sử dụng cơ chế SSE (Server-Sent Events) hiệu năng cao, thiết lập một kết nối HTTP duy nhất (Keep-Alive) để đẩy sự kiện thay đổi trạng thái của vé (`held`, `released`, `sold`, `reset`) tới toàn bộ các client đang kết nối mà không cần client phải reload (F5) trang.
+3. **Idempotency API Control**: Sử dụng `Idempotency-Key` kết hợp lưu vết trạng thái `processing` và kết quả giao dịch `completed` trên Redis nhằm chống trùng lặp thanh toán khi người dùng click liên tục hoặc mạng chập chờn.
+4. **Background Expiry Worker**: Một Goroutine ngầm chạy độc lập mỗi 3 giây quét DB để tự động reset các vé ở trạng thái `Holding` có `hold_expiry` nhỏ hơn thời gian hiện tại về trạng thái `Available` (nếu hết 5 phút mà user chưa thanh toán).
+5. **SSE Real-time Broadcast**: Sử dụng cơ chế SSE (Server-Sent Events) hiệu năng cao, thiết lập một kết nối HTTP duy nhất (Keep-Alive) để đẩy sự kiện thay đổi trạng thái của vé (`held`, `released`, `sold`, `reset`) tới toàn bộ các client đang kết nối mà không cần client phải reload (F5) trang.
+6. **Kiến trúc Clean Code & Phân rã Component**:
+   - **Backend Middlewares**: Tách biệt hoàn toàn các logic phụ trợ như CORS, Chống trùng lặp (Idempotency) và Xác thực (Auth/Admin) ra khỏi Handler và cấu trúc vào package `middleware` riêng biệt.
+   - **Vite React Fast Refresh**: Phân rã tệp Context hỗn hợp thành tệp khai báo thuần TypeScript `TicketContext.ts` và tệp Component React `TicketProvider.tsx` giúp Vite HMR (Hot Module Replacement) có thể reload cực nhanh tại môi trường phát triển.
+   - **Frontend Page Splitting**: Tách trang đặt vé lớn thành các component nhỏ hơn: `CheckoutForm.tsx` (nhập thông tin), `HoldSummary.tsx` (vé đang giữ), và `SelectionSummary.tsx` (vé đang chọn tạm thời) để tăng tính tái sử dụng và khả năng maintain.
 
 ---
 
-## 3. CẤU TRÚC THƯ MỤC BACKEND (CLEAN ARCHITECTURE)
+## 3. CẤU TRÚC THƯ MỤC BACKEND & FRONTEND
 
 ```text
 ticketbox/
@@ -78,14 +83,21 @@ ticketbox/
 │   ├── delivery/             # Giao tiếp lớp ngoài (Presentation Layer)
 │   │   ├── http/             # Cấu hình Gin REST API handlers
 │   │   └── sse/              # Quản lý Server-Sent Events broker phục vụ real-time
+│   ├── middleware/           # Các HTTP middlewares xử lý chung (CORS, Idempotency, Auth)
+│   │   ├── cors.go           # Cấu hình headers CORS
+│   │   ├── idempotency.go    # Chống trùng lặp giao dịch (Idempotency-Key)
+│   │   └── auth.go           # Xác thực phiên người dùng & phân quyền Admin
 │   ├── config/               # Khởi tạo kết nối hạ tầng (Postgres, Redis client)
 │   ├── Dockerfile            # Dockerfile build backend stage
 │   ├── main.go               # Entrypoint lắp ghép Dependency Injection & khởi chạy
 │   └── ...
 ├── frontend/                 # Giao diện Frontend (ReactJS + Tailwind CSS v4)
 │   ├── src/
-│   │   ├── components/       # Các UI Component tách biệt (Header, Footer, Grid, Receipt...)
-│   │   ├── context/          # Đồng bộ dữ liệu state & SSE (tích hợp API + Fallback Mock Mode)
+│   │   ├── components/       # UI Components
+│   │   │   ├── booking/      # Các component đặt vé (CheckoutForm, HoldSummary, SelectionSummary, Grid, ...)
+│   │   │   └── common/       # Các component chung (Header, Footer)
+│   │   ├── context/          # Các Context đồng bộ trạng thái (AuthContext, TicketContext, TicketProvider)
+│   │   ├── hooks/            # Các custom hooks chứa business logic (useAuth, useTickets)
 │   │   ├── pages/            # Các trang giao diện chính (Home, Booking, Admin)
 │   │   └── ...
 │   ├── Dockerfile            # Dockerfile build frontend stage với Nginx
