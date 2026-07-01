@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { TicketProvider } from './context/TicketContext';
+import { TicketProvider } from './context/TicketProvider';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { Login } from './pages/Login';

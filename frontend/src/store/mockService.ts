@@ -7,7 +7,7 @@ export const getInitialTickets = (): Ticket[] => {
     const savedCache = localStorage.getItem('ticketbox_cached_tickets');
     if (savedCache) return JSON.parse(savedCache);
     
-    const savedMock = localStorage.getItem('mini_ticketbox_tickets_v3');
+    const savedMock = localStorage.getItem('ticketbox_tickets_v3');
     if (savedMock) return JSON.parse(savedMock);
   } catch (err) {
     console.error("Failed to parse cached tickets:", err);
@@ -60,7 +60,7 @@ export const runHoldTicketsMock = (
 
       setStore({ currentUserHold: hold });
       queryClient.setQueryData(['tickets'], next);
-      localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(next));
+      localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(next));
       resolve();
     }, 300);
   });
@@ -74,7 +74,7 @@ export const runReleaseHoldMock = (currentUserHold: CurrentUserHold) => {
       : t
   );
   queryClient.setQueryData(['tickets'], next);
-  localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(next));
+  localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(next));
 };
 
 export const runConfirmPaymentMock = (
@@ -113,7 +113,7 @@ export const runConfirmPaymentMock = (
 
       setStore({ currentUserHold: null });
       queryClient.setQueryData(['tickets'], next);
-      localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(next));
+      localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(next));
       resolve();
     }, 500);
   });
@@ -132,7 +132,7 @@ export const runResetAllTicketsMock = (setStore: (state: any) => void) => {
   }
   setStore({ currentUserHold: null });
   queryClient.setQueryData(['tickets'], initial);
-  localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(initial));
+  localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(initial));
 };
 
 export const startCleanInterval = (getStore: () => any, setStore: (state: any) => void) => {
@@ -160,7 +160,7 @@ export const startCleanInterval = (getStore: () => any, setStore: (state: any) =
         });
         if (changed) {
           queryClient.setQueryData(['tickets'], next);
-          localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(next));
+          localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(next));
         }
       }
     }, 1000);
@@ -208,7 +208,7 @@ export const startSimulationInterval = (getStore: () => any) => {
         }
       }
       queryClient.setQueryData(['tickets'], next);
-      localStorage.setItem('mini_ticketbox_tickets_v3', JSON.stringify(next));
+      localStorage.setItem('ticketbox_tickets_v3', JSON.stringify(next));
     }, 4000);
   }
 };

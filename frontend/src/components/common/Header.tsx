@@ -64,7 +64,7 @@ export const Header = ({ currentPage, onNavigate }) => {
           </div>
 
           <button 
-            className="btn btn-secondary py-2 px-4 rounded-[20px] text-xs flex items-center gap-1.5 cursor-pointer border-red-500/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/40"
+            className="btn btn-secondary py-1.5 px-3 rounded-[20px] text-xs flex items-center gap-1.5 cursor-pointer border-red-500/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/40"
             onClick={logout}
           >
             <LogOut size={14} />

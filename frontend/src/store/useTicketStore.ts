@@ -65,7 +65,7 @@ export const useTicketStore = create<TicketStoreState>()(
           set({ isUsingBackend: false });
 
           // Load local mock tickets or generate them
-          const savedMockTickets = localStorage.getItem('mini_ticketbox_tickets_v3');
+          const savedMockTickets = localStorage.getItem('ticketbox_tickets_v3');
           if (savedMockTickets) {
             queryClient.setQueryData(['tickets'], JSON.parse(savedMockTickets));
           } else {
@@ -226,4 +226,5 @@ export const useTicketStore = create<TicketStoreState>()(
     }
   )
 );
+
 export type { Ticket };

@@ -1,15 +1,9 @@
-import React, { createContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTicketStore } from '../store/useTicketStore';
-import type { Ticket, TicketStoreState } from '../types';
+import type { Ticket } from '../types';
 import { API_BASE } from '../constants';
-
-export interface TicketContextType extends TicketStoreState {
-  tickets: Ticket[];
-  ticketsLoading: boolean;
-}
-
-export const TicketContext = createContext<TicketContextType | null>(null);
+import { TicketContext, TicketContextType } from './TicketContext';
 
 // Query function to fetch tickets from Go API or read from local mock storage
 const fetchTicketsQuery = async (): Promise<Ticket[]> => {
@@ -24,7 +18,7 @@ const fetchTicketsQuery = async (): Promise<Ticket[]> => {
   }
   
   // Local Mock Mode
-  const saved = localStorage.getItem('mini_ticketbox_tickets_v3');
+  const saved = localStorage.getItem('ticketbox_tickets_v3');
   return saved ? JSON.parse(saved) : [];
 };
 
@@ -56,7 +50,7 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
           const savedCache = localStorage.getItem('ticketbox_cached_tickets');
           return savedCache ? JSON.parse(savedCache) : undefined;
         } else {
-          const savedMock = localStorage.getItem('mini_ticketbox_tickets_v3');
+          const savedMock = localStorage.getItem('ticketbox_tickets_v3');
           return savedMock ? JSON.parse(savedMock) : undefined;
         }
       } catch (err) {
@@ -82,4 +76,3 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
     </TicketContext.Provider>
   );
 };
-
