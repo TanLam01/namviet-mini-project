@@ -222,3 +222,30 @@ Bạn cần chạy Postgres (sử dụng database mặc định tên `postgres` 
    npm run dev
    ```
 3. Truy cập tại: [http://localhost:5173/](http://localhost:5173/)
+
+---
+
+## 6. HỆ THỐNG GHI NHẬN VÀ THEO DÕI LOG LỖI (ERROR LOGGING)
+
+Dự án được tích hợp sẵn middleware ghi nhận toàn bộ các request lỗi (có mã HTTP Status Code >= 400). Khi xảy ra lỗi, thông tin sẽ được tự động ghi nhận đồng thời vào cả **File log** và **Cơ sở dữ liệu PostgreSQL**.
+
+### Cách 1: Xem bằng File Log tĩnh (Trực quan & Nhanh nhất)
+Nhờ cơ chế mount volume của Docker, file log lỗi của Backend trong container được đồng bộ trực tiếp ra ngoài máy thật tại thư mục dự án của bạn:
+* **Đường dẫn**: `backend/logs/error.log`
+
+Bạn có thể mở trực tiếp file này trên VS Code để theo dõi nhanh các thông số của request lỗi:
+* Thời gian xảy ra lỗi.
+* Status Code (ví dụ: `400`, `401`, `409`, `500`).
+* Phương thức (`Method`), đường dẫn (`Path`), địa chỉ IP client.
+* Thông tin người dùng (`Email`, `ID`) và chi tiết lỗi trả về (`Error Message`).
+
+### Cách 2: Xem trực tiếp trong Cơ sở dữ liệu (Database)
+Toàn bộ log lỗi được lưu trữ lâu dài trong bảng `error_logs` của PostgreSQL để phân tích sâu hơn:
+* **Cột định danh người dùng**: `user_id` (userId) và `email` (lưu ID và Email của tài khoản đăng nhập, hoặc `Guest` nếu chưa đăng nhập).
+* **Các cột tối ưu khác**: `ip_address`, `method`, `path`, `query_params`, `request_body` (dữ liệu JSON gửi lên), `error_message`, `status_code`, `user_agent`, và `created_at`.
+
+Bạn có thể truy cập Postgres và truy vấn nhanh bằng lệnh SQL:
+```sql
+SELECT id, user_id, email, method, path, error_message, status_code FROM error_logs;
+```
+
