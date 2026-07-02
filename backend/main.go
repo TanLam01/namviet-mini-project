@@ -34,7 +34,7 @@ func main() {
 
 	// 2. Run Database AutoMigrate (Ticket and User tables)
 	log.Println("Running database migrations...")
-	err := config.DB.AutoMigrate(&domain.Ticket{}, &domain.User{})
+	err := config.DB.AutoMigrate(&domain.Ticket{}, &domain.User{}, &domain.ErrorLog{})
 	if err != nil {
 		log.Fatalf("Fatal: Database AutoMigrate failed: %v", err)
 	}
@@ -73,6 +73,7 @@ func main() {
 	r := gin.Default()
 	_ = r.SetTrustedProxies(nil) // Khai báo bảo mật không sử dụng proxy trung gian
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.ErrorLoggingMiddleware(config.DB))
 	r.Use(middleware.IdempotencyMiddleware(config.Redis))
 
 	// Swagger UI Route
