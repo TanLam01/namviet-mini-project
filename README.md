@@ -7,7 +7,7 @@ Dự án này là bài thi kỹ thuật (Technical Test) xây dựng hệ thốn
 ## 1. THÔNG TIN ỨNG VIÊN & TÀI KHOẢN THỬ NGHIỆM
 
 - **Họ và tên**: Tất Tấn Lâm
-- **Vị trí ứng tuyển**: Fullstack Developer (Golang + React)
+- **Vị trí ứng tuyển**: Fullstack Developer
 - **Email**: tattanlam.work@gmail.com
 
 ### Tài khoản thử nghiệm (Đã có sẵn trong Database):
