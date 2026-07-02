@@ -165,6 +165,30 @@ Khuyến khích chạy dự án bằng **Docker Compose** để tự động cà
    - **PostgreSQL Database**: Port `5432`
    - **Redis Server**: Port `6379`
 
+> [!IMPORTANT]
+> **Xử lý lỗi trùng cổng 8080 (Port Collision):**
+> 
+> Mặc định dự án được cấu hình chạy Backend trên cổng `8080` trên máy chủ (host). Nếu cổng `8080` đã bị ứng dụng khác chiếm dụng (báo lỗi `bind: Only one usage of each socket address...`), bạn có thể đổi Backend sang cổng khác (ví dụ: `8081`) theo các bước sau:
+> 
+> 1. Mở file [docker-compose.yml](file:///d:/test/namviet-mini-project/docker-compose.yml), tại service `backend`, sửa phần `ports` từ `- "8080:8080"` thành `- "8081:8080"`.
+> 2. Mở file [frontend/Dockerfile](file:///d:/test/namviet-mini-project/frontend/Dockerfile), thêm 2 dòng nhận tham số build trước lệnh `RUN npm run build`:
+>    ```dockerfile
+>    ARG VITE_API_URL
+>    ENV VITE_API_URL=$VITE_API_URL
+>    RUN npm run build
+>    ```
+> 3. Mở file [docker-compose.yml](file:///d:/test/namviet-mini-project/docker-compose.yml), sửa phần service `frontend` để truyền cổng mới lúc build:
+>    ```yaml
+>      frontend:
+>        build:
+>          context: ./frontend
+>          args:
+>            - VITE_API_URL=http://localhost:8081
+>        container_name: ticketbox_frontend
+>        # ... các cấu hình khác giữ nguyên
+>    ```
+> 4. Chạy lại lệnh: `docker compose up -d --build` để khởi động lại hệ thống với cổng mới.
+
 _Lưu ý: Backend có tích hợp cơ chế tự động kết nối lại (retries) đề phòng trường hợp PostgreSQL khởi động chậm hơn Go._
 
 ### Cách 2: Chạy thủ công từng phần ở Local
